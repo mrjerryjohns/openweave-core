@@ -39,6 +39,9 @@
 #define __STDC_CONSTANT_MACROS
 #endif // __STDC_CONSTANT_MACROS
 
+#undef WEAVE_DETAIL_LOGGING
+#define WEAVE_DETAIL_LOGGING 1
+
 #include <Weave/Profiles/data-management/Current/WdmManagedNamespace.h>
 #include <Weave/Profiles/data-management/DataManagement.h>
 

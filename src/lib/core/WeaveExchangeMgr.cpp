@@ -34,6 +34,7 @@
 #include <Weave/Core/WeaveCore.h>
 #include <Weave/Profiles/WeaveProfiles.h>
 #include <Weave/Profiles/common/CommonProfile.h>
+#include <Weave/Profiles/data-management/MessageDef.h>
 #include <Weave/Profiles/security/WeaveSecurity.h>
 #include <Weave/Core/WeaveEncoding.h>
 #include <Weave/Support/CodeUtils.h>
@@ -242,7 +243,7 @@ ExchangeContext *WeaveExchangeManager::NewContext(const uint64_t &peerNodeId, co
 #if WEAVE_CONFIG_ENABLE_EPHEMERAL_UDP_PORT
         ec->SetUseEphemeralUDPPort(MessageLayer->EphemeralUDPPortEnabled());
 #endif // WEAVE_CONFIG_ENABLE_EPHEMERAL_UDP_PORT
-        WeaveLogProgress(ExchangeManager, "ec id: %d, AppState: 0x%x", EXCHANGE_CONTEXT_ID(ec - ContextPool), ec->AppState);
+        WeaveLogDetail(ExchangeManager, "ec id: %d, AppState: 0x%x", EXCHANGE_CONTEXT_ID(ec - ContextPool), ec->AppState);
     }
     return ec;
 }
@@ -624,6 +625,90 @@ static void DefaultOnMessageReceived(ExchangeContext *ec, const IPPacketInfo *pk
     PacketBuffer::Free(payload);
 }
 
+char *ProfileIdToStr(uint32_t profileId)
+{
+    static char profileIdStrBuf[128];
+
+    switch (profileId) {
+        case kWeaveProfile_Common:
+            return "Common";
+            break;
+
+        case kWeaveProfile_WDM:
+            return "WDM";
+            break;
+
+        default:
+            sprintf(profileIdStrBuf, "%08x", profileId);
+            return profileIdStrBuf;
+    }
+}
+
+char *MessageTypeToStr(uint32_t profileId, uint16_t messageType)
+{
+    static char profileIdStrBuf[128];
+
+    switch (profileId) {
+        case kWeaveProfile_Common:
+        {
+            switch (messageType) {
+                case Profiles::Common::kMsgType_Null:
+                    return "ACK";
+                    break;
+
+                case Profiles::Common::kMsgType_StatusReport:
+                    return "StatusReport";
+                    break;
+
+                default:
+                    break;
+            }
+
+            break;
+        }
+
+        case kWeaveProfile_WDM:
+        {
+            switch (messageType) {
+                case Profiles::DataManagement::kMsgType_SubscribeRequest:
+                    return "SubscribeRequest";
+                    break;
+
+                case Profiles::DataManagement::kMsgType_SubscribeResponse:
+                    return "SubscribeResponse";
+                    break;
+
+                case Profiles::DataManagement::kMsgType_SubscribeConfirmRequest:
+                    return "SubscribeConfirm";
+                    break;
+
+                case Profiles::DataManagement::kMsgType_NotificationRequest:
+                    return "Notify";
+                    break;
+
+                case Profiles::DataManagement::kMsgType_CustomCommandRequest:
+                    return "CommandRequest";
+                    break;
+
+                case Profiles::DataManagement::kMsgType_CustomCommandResponse:
+                    return "CommandResponse";
+                    break;
+
+                default:
+                    break;
+            }
+
+            break;
+        }
+
+        default:
+            break;  
+    }
+
+    sprintf(profileIdStrBuf, "%08x", profileId);
+    return profileIdStrBuf;
+}
+
 void WeaveExchangeManager::DispatchMessage(WeaveMessageInfo *msgInfo, PacketBuffer *msgBuf)
 {
     WeaveExchangeHeader exchangeHeader;
@@ -664,8 +749,8 @@ void WeaveExchangeManager::DispatchMessage(WeaveMessageInfo *msgInfo, PacketBuff
 
     msgCon = msgInfo->InCon;
 
-    WeaveLogRetain(ExchangeManager, "Msg %s %08" PRIX32 ":%d %d %016" PRIX64 " %04" PRIX16 " %04" PRIX16 " %ld MsgId:%08" PRIX32,
-                   "rcvd", exchangeHeader.ProfileId, exchangeHeader.MessageType,
+    WeaveLogRetain(ExchangeManager, "Msg %s %s:%s %d %016" PRIX64 " %04" PRIX16 " %04" PRIX16 " %ld MsgId:%08" PRIX32,
+                   "rcvd", ProfileIdToStr(exchangeHeader.ProfileId), MessageTypeToStr(exchangeHeader.ProfileId, exchangeHeader.MessageType),
                    (int)msgBuf->DataLength(), msgInfo->SourceNodeId, msgCon->LogId(), exchangeHeader.ExchangeId,
                    (long)err, msgInfo->MessageId);
 
@@ -874,7 +959,7 @@ void WeaveExchangeManager::DispatchMessage(WeaveMessageInfo *msgInfo, PacketBuff
             ec->OnMessageReceived = DefaultOnMessageReceived;
             ec->AllowDuplicateMsgs = matchingUMH->AllowDuplicateMsgs;
 
-            WeaveLogProgress(ExchangeManager, "ec id: %d, AppState: 0x%x", EXCHANGE_CONTEXT_ID(ec - ContextPool), ec->AppState);
+            WeaveLogDetail(ExchangeManager, "ec id: %d, AppState: 0x%x", EXCHANGE_CONTEXT_ID(ec - ContextPool), ec->AppState);
         }
 #if WEAVE_CONFIG_ENABLE_RELIABLE_MESSAGING
         // If the exchange is created only to send ack.

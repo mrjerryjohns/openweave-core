@@ -1843,7 +1843,7 @@
  *
  */
 #ifndef WEAVE_DETAIL_LOGGING
-#define WEAVE_DETAIL_LOGGING                                1
+#define WEAVE_DETAIL_LOGGING                                0
 #endif // WEAVE_DETAIL_LOGGING
 
 /**

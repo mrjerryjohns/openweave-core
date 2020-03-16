@@ -385,6 +385,9 @@ WEAVE_ERROR ExchangeContext::SendMessage(uint32_t profileId, uint8_t msgType, Pa
     return SendMessage(profileId, msgType, msgBuf, sendFlags, &msgInfo, msgCtxt);
 }
 
+extern char *ProfileIdToStr(uint32_t profileId);
+extern char *MessageTypeToStr(uint32_t profileId, uint16_t messageType);
+
 /**
  *  Send a Weave message on this exchange.
  *
@@ -631,8 +634,8 @@ WEAVE_ERROR ExchangeContext::SendMessage(uint32_t profileId, uint8_t msgType, Pa
 exit:
     if (sendCalled)
     {
-        WeaveLogRetain(ExchangeManager, "Msg %s %08" PRIX32 ":%d %d %016" PRIX64 " %04" PRIX16 " %04" PRIX16 " %ld MsgId:%08" PRIX32,
-                       "sent", profileId, msgType, (int)payloadLen, msgInfo->DestNodeId,
+        WeaveLogRetain(ExchangeManager, "Msg %s %s:%s %d %016" PRIX64 " %04" PRIX16 " %04" PRIX16 " %ld MsgId:%08" PRIX32,
+                       "sent", ProfileIdToStr(profileId), MessageTypeToStr(profileId, msgType), (int)payloadLen, msgInfo->DestNodeId,
                        (Con ? Con->LogId() : 0), ExchangeId, (long)err, msgInfo->MessageId);
     }
     if (err != WEAVE_NO_ERROR && IsResponseExpected())
